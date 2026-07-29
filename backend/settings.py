@@ -95,16 +95,22 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=(
-            f"postgresql://{env('DB_USER')}:{env('DB_PASSWORD')}@"
-            f"{env('DB_HOST', default='localhost')}:{env('DB_PORT', default='5432')}/"
-            f"{env('DB_NAME')}"
-        ),
-        conn_max_age=600,
-    )
-}
+
+if env("DATABASE_URL", default=None):
+    DATABASES = {
+        "default": dj_database_url.config(conn_max_age=600)
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("DB_NAME"),
+            "USER": env("DB_USER"),
+            "PASSWORD": env("DB_PASSWORD"),
+            "HOST": env("DB_HOST", default="localhost"),
+            "PORT": env("DB_PORT", default="5432"),
+        }
+    }
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
