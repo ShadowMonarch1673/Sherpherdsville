@@ -1,5 +1,7 @@
 import logging
+import requests
 
+from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -9,18 +11,40 @@ from .models import Complaint, ComplaintStatusHistory, Notification, Notificatio
 logger = logging.getLogger(__name__)
 
 
+
 def send_notification_email(to_email, subject, message):
     """
-    Wrapped in try/except so an email failure (bad address, SMTP hiccup,
-    etc.) never breaks the actual complaint/status-update request itself.
+    Sends via Brevo's HTTP API instead of raw SMTP, since some hosts
+    (Railway included) block outbound SMTP ports entirely. HTTPS traffic
+    like this works reliably everywhere.
+    Wrapped in try/except so an email failure never breaks the actual
+    complaint/status-update request itself.
     """
     if not to_email:
         return
     try:
-        send_mail(subject, message, None, [to_email])
+        response = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "api-key": settings.BREVO_API_KEY,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            json={
+                "sender": {"name": "Sherpherdsville", "email": "joshsackey123@gmail.com"},
+                "to": [{"email": to_email}],
+                "subject": subject,
+                "textContent": message,
+            },
+            timeout=10,
+        )
+        if response.status_code >= 400:
+            logger.error(
+                "Brevo API error sending to %s: %s %s",
+                to_email, response.status_code, response.text
+            )
     except Exception:
         logger.exception("Failed to send notification email to %s", to_email)
-
 
 @receiver(post_save, sender=Complaint)
 def notify_admins_on_new_complaint(sender, instance, created, **kwargs):
