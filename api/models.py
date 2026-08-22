@@ -259,3 +259,22 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review for Complaint #{self.complaint_id}: {self.rating}/5"
+
+
+class OTP(models.Model):
+    """
+    One-time passcode for resident login. A resident requests one by email,
+    we verify it exists in the client's external database, generate this,
+    and email it. Verifying it issues a normal JWT session (3-day lifetime).
+    """
+    email = models.EmailField()
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"OTP for {self.email} ({'used' if self.is_used else 'active'})"

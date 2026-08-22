@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import environ
 import dj_database_url
-
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -61,6 +61,11 @@ REST_FRAMEWORK = {
     ),
 }
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=3),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
+}
+
 AUTH_USER_MODEL = "api.User"
 
 MIDDLEWARE = [
@@ -98,22 +103,37 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 
-
 if env("DATABASE_URL", default=None):
-    DATABASES = {
-        "default": dj_database_url.config(conn_max_age=600)
-    }
+    _default_db = dj_database_url.config(conn_max_age=600)
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": env("DB_NAME"),
-            "USER": env("DB_USER"),
-            "PASSWORD": env("DB_PASSWORD"),
-            "HOST": env("DB_HOST", default="localhost"),
-            "PORT": env("DB_PORT", default="5432"),
-        }
+    _default_db = {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USER"),
+        "PASSWORD": env("DB_PASSWORD"),
+        "HOST": env("DB_HOST", default="localhost"),
+        "PORT": env("DB_PORT", default="5432"),
     }
+
+DATABASES = {
+    "default": _default_db,
+    "external": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("EXTERNAL_DB_NAME", default=env("DB_NAME")),
+        "USER": env("EXTERNAL_DB_USER", default=env("DB_USER")),
+        "PASSWORD": env("EXTERNAL_DB_PASSWORD", default=env("DB_PASSWORD")),
+        "HOST": env("EXTERNAL_DB_HOST", default=env("DB_HOST", default="localhost")),
+        "PORT": env("EXTERNAL_DB_PORT", default=env("DB_PORT", default="5432")),
+    },
+}
+
+# Table/column names in the client's existing database — update these once
+# we know their actual schema.
+EXTERNAL_RESIDENTS_TABLE = env("EXTERNAL_RESIDENTS_TABLE", default="residents")
+EXTERNAL_EMAIL_COLUMN = env("EXTERNAL_EMAIL_COLUMN", default="email")
+EXTERNAL_FIRST_NAME_COLUMN = env("EXTERNAL_FIRST_NAME_COLUMN", default="first_name")
+EXTERNAL_LAST_NAME_COLUMN = env("EXTERNAL_LAST_NAME_COLUMN", default="last_name")
+EXTERNAL_ROOM_COLUMN = env("EXTERNAL_ROOM_COLUMN", default="room_number")
 
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

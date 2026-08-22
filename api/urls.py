@@ -13,6 +13,8 @@ from .views import (
     GoogleLoginCallbackView,
     CommentListCreateView,
     ReviewCreateView,
+    RequestOTPView,
+    VerifyOTPView,
 )
 
 
@@ -30,4 +32,6 @@ urlpatterns = [
     path("auth/google/callback/", GoogleLoginCallbackView.as_view(), name="google-callback"),
     path("complaints/<int:complaint_id>/comments/", CommentListCreateView.as_view(), name="complaint-comments"),
     path("complaints/<int:complaint_id>/review/", ReviewCreateView.as_view(), name="complaint-review"),
+    path("auth/request-otp/", RequestOTPView.as_view(), name="request-otp"),
+    path("auth/verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
 ]

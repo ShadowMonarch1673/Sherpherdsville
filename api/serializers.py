@@ -150,3 +150,12 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ["id", "complaint", "resident", "rating", "feedback", "created_at"]
         read_only_fields = ["id", "complaint", "resident", "created_at"]
+
+
+class RequestOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=6)

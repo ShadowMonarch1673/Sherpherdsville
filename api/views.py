@@ -8,8 +8,11 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+import random
+from datetime import timedelta
+from django.db import connections
 
-from .models import User, Complaint, ComplaintStatusHistory, Notification, Comment, Review
+from .models import User, Complaint, ComplaintStatusHistory, Notification, Comment, Review, OTP
 from .serializers import (
     RegisterSerializer,
     UserSerializer,
@@ -19,8 +22,12 @@ from .serializers import (
     NotificationSerializer,
     CommentSerializer,
     ReviewSerializer,
+    RequestOTPSerializer,
+    VerifyOTPSerializer,
 )
 from .permissions import IsResident, IsOwnerOrAdmin, IsAdminRole
+import logging
+logger = logging.getLogger(__name__)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -276,3 +283,134 @@ class ReviewCreateView(generics.CreateAPIView):
             raise PermissionDenied("This complaint has already been reviewed.")
 
         serializer.save(complaint=complaint, resident=user)
+
+
+
+def lookup_external_resident(email):
+    """
+    Queries the client's external database (read-only) to check if this
+    email belongs to a real resident, and if so, returns their details.
+    Table/column names come from settings so they're easy to update once
+    we have the client's real schema.
+    """
+    table = settings.EXTERNAL_RESIDENTS_TABLE
+    email_col = settings.EXTERNAL_EMAIL_COLUMN
+    first_col = settings.EXTERNAL_FIRST_NAME_COLUMN
+    last_col = settings.EXTERNAL_LAST_NAME_COLUMN
+    room_col = settings.EXTERNAL_ROOM_COLUMN
+
+    query = f"""
+        SELECT {email_col}, {first_col}, {last_col}, {room_col}
+        FROM {table}
+        WHERE {email_col} = %s
+        LIMIT 1
+    """
+    with connections["external"].cursor() as cursor:
+        cursor.execute(query, [email])
+        row = cursor.fetchone()
+
+    if not row:
+        return None
+    return {
+        "email": row[0],
+        "first_name": row[1] or "",
+        "last_name": row[2] or "",
+        "room_number": row[3] or "",
+    }
+
+
+class RequestOTPView(APIView):
+    """
+    POST /api/auth/request-otp/
+    Checks if the email exists in the client's resident database, and if
+    so, generates and emails a 6-digit OTP.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = RequestOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+
+        resident = lookup_external_resident(email)
+        if not resident:
+            return Response(
+                {"detail": "This email was not found in the resident records."},
+                status=404,
+            )
+
+        code = f"{random.randint(0, 999999):06d}"
+        OTP.objects.create(
+            email=email,
+            code=code,
+            expires_at=timezone.now() + timedelta(minutes=10),
+        )
+
+        send_notification_email_wrapper = None
+        try:
+            from .signals import send_notification_email
+            send_notification_email(
+                email,
+                subject="Your Sherpherdsville Login Code",
+                message=f"Your one-time login code is: {code}\n\nThis code expires in 10 minutes.",
+            )
+        except Exception:
+            logger.exception("Failed to send OTP email to %s", email)
+
+        return Response({"detail": "OTP sent to your email."}, status=200)
+
+
+class VerifyOTPView(APIView):
+    """
+    POST /api/auth/verify-otp/
+    Validates the OTP, then finds-or-creates the local User (pulling
+    profile info from the external DB on first login), and issues JWT
+    tokens with a 3-day lifetime.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = VerifyOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+        code = serializer.validated_data["code"]
+
+        otp = (
+            OTP.objects.filter(email=email, code=code, is_used=False)
+            .order_by("-created_at")
+            .first()
+        )
+        if not otp:
+            return Response({"detail": "Invalid code."}, status=400)
+        if otp.expires_at < timezone.now():
+            return Response({"detail": "This code has expired."}, status=400)
+
+        otp.is_used = True
+        otp.save(update_fields=["is_used"])
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            resident = lookup_external_resident(email)
+            base_username = email.split("@")[0]
+            username = base_username
+            suffix = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{suffix}"
+                suffix += 1
+
+            user = User.objects.create(
+                username=username,
+                email=email,
+                first_name=resident["first_name"] if resident else "",
+                last_name=resident["last_name"] if resident else "",
+                room_number=resident["room_number"] if resident else "",
+                role="RESIDENT",
+            )
+            user.set_unusable_password()
+            user.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        })
