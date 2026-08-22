@@ -12,7 +12,7 @@ import random
 from datetime import timedelta
 from django.db import connections
 
-from .models import User, Complaint, ComplaintStatusHistory, Notification, Comment, Review, OTP
+from .models import User, Complaint, ComplaintStatusHistory, Notification, Comment, Review, OTP, Category
 from .serializers import (
     RegisterSerializer,
     UserSerializer,
@@ -24,6 +24,7 @@ from .serializers import (
     ReviewSerializer,
     RequestOTPSerializer,
     VerifyOTPSerializer,
+    CategorySerializer,
 )
 from .permissions import IsResident, IsOwnerOrAdmin, IsAdminRole
 import logging
@@ -414,3 +415,9 @@ class VerifyOTPView(APIView):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         })
+
+
+class CategoryListView(generics.ListAPIView):
+    queryset = Category.objects.filter(is_active=True)
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]

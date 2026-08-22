@@ -1,7 +1,7 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from .models import User, Role, Complaint, ComplaintAttachment, Notification, Comment, Review
+from .models import User, Role, Complaint, ComplaintAttachment, Notification, Comment, Review, ComplaintStatusHistory, Category
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -57,10 +57,24 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+class ComplaintAttachmentMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComplaintAttachment
+        fields = ["id", "image", "uploaded_at"]
+
+
+class ComplaintStatusHistoryMiniSerializer(serializers.ModelSerializer):
+    changed_by = serializers.StringRelatedField()
+
+    class Meta:
+        model = ComplaintStatusHistory
+        fields = ["old_status", "new_status", "note", "changed_by", "changed_at"]
 
 class ComplaintSerializer(serializers.ModelSerializer):
     resident = serializers.StringRelatedField(read_only=True)
     resident_id = serializers.IntegerField(source="resident.id", read_only=True)
+    attachments = ComplaintAttachmentMiniSerializer(many=True, read_only=True)
+    status_history = ComplaintStatusHistoryMiniSerializer(many=True, read_only=True)
     room_number = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
@@ -77,6 +91,8 @@ class ComplaintSerializer(serializers.ModelSerializer):
             "priority",
             "assigned_to",
             "resolution_notes",
+            "attachments",
+            "status_history",
             "created_at",
             "updated_at",
             "resolved_at",
@@ -159,3 +175,9 @@ class RequestOTPSerializer(serializers.Serializer):
 class VerifyOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField(max_length=6)
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ["id", "name"]

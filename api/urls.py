@@ -15,6 +15,7 @@ from .views import (
     ReviewCreateView,
     RequestOTPView,
     VerifyOTPView,
+    CategoryListView,
 )
 
 
@@ -34,4 +35,5 @@ urlpatterns = [
     path("complaints/<int:complaint_id>/review/", ReviewCreateView.as_view(), name="complaint-review"),
     path("auth/request-otp/", RequestOTPView.as_view(), name="request-otp"),
     path("auth/verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
+        path("categories/", CategoryListView.as_view(), name="category-list"),
 ]
