@@ -1,63 +1,108 @@
-# Sherpherdsville Hostel Management System
+# Sherpherdsville Hostel Complaint Management System
 
-Production-oriented final-year project: hostel complaints, operations, handbook, calendar, analytics, and AI-assisted triage.
+A Django REST API and React/Vite portal for resident complaint reporting, staff workflows, announcements, maintenance scheduling, notifications, analytics, and audit history.
 
-## Implemented upgrades (all 10)
+## Requirements
 
-1. **Near real-time notifications** — 15s polling + badge dropdown (Channels packages included for optional WebSocket upgrade)
-2. **Maintenance calendar** — scheduled works with affected blocks
-3. **SLA / overdue badges** — Urgent 4h · High 24h · Medium 72h · Low 7d
-4. **Specialist roles** — Electrician, Plumber, Carpenter, Cleaner, Security + category specialization
-5. **AI triage** — rule-based category & priority suggestions on file-complaint
-6. **Admin email digest** — `python manage.py send_admin_digest`
-7. **FAQ / Resident handbook** — searchable; Shepherd chatbot answers from FAQ
-8. **PWA** — installable via `vite-plugin-pwa`
-9. **Audit log** — immutable action trail (admin UI)
-10. **Bulk actions + analytics filters** — multi-select status updates; `/api/analytics/range/?from=&to=`
+- Python 3.12+
+- Node.js 20+
+- PostgreSQL for production (SQLite is used automatically for local development)
 
-## Quick start
+## Local setup
 
 ### Backend
+
 ```bash
-cd Sherpherdsville-main
-python -m venv venv && source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # set SECRET_KEY + DB
+cp .env.example .env
 python manage.py migrate
 python manage.py seed_demo
 python manage.py runserver
 ```
 
-Demo logins after seed:
-- `admin` / `admin123`
-- `jane` / `demo123`
+The backend is available at `http://127.0.0.1:8000`.
 
 ### Frontend
+
+In another terminal:
+
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-### Optional: admin digest cron
+The frontend is available at `http://127.0.0.1:5173` and proxies `/api` to Django.
+
+## Demo access
+
+- Administrator: `admin` / `ChangeMe123!`
+- Residents: request an OTP using any seeded email listed in `db-demo.txt`. Existing active resident users can also sign in with the email saved on their user record; a separate registry entry is not required.
+- With the default development configuration, the OTP is returned in the API response and printed by the console email backend. Set `OTP_DEBUG_RETURN_CODE=False` in production.
+
+Change the demonstration administrator password before any shared deployment.
+
+## Tests and checks
+
 ```bash
-0 8 * * * cd /path/to/Sherpherdsville-main && venv/bin/python manage.py send_admin_digest
+python manage.py check
+python manage.py makemigrations --check
+python manage.py test
+cd frontend
+npm run build
 ```
 
-### Optional: Django Channels (true WebSockets)
-Packages are in requirements. Wire `ASGI_APPLICATION` + Redis channel layer for production push; the UI already refreshes notifications every 15s without Redis.
+## Environment configuration
 
-## API highlights
-| Endpoint | Purpose |
-|----------|---------|
-| `POST /api/triage/` | AI category/priority suggestion |
-| `GET /api/scheduled-works/` | Maintenance calendar |
-| `GET /api/faq/` | Handbook |
+Local development starts without PostgreSQL or email credentials. See `.env.example` for all options.
+
+- `DATABASE_URL`: primary PostgreSQL connection in production.
+- `EXTERNAL_DATABASE_URL`: optional read-only resident registry database. Email is the only OTP identifier. When omitted, existing resident users and the local `ResidentRegistry` table are checked.
+- `BREVO_API_KEY`: optional Brevo email API key. When omitted, Django's configured email backend is used.
+- `VITE_API_URL`: optional frontend API base URL; defaults to `/api`.
+
+Never enable `DEBUG` or `OTP_DEBUG_RETURN_CODE` in production.
+
+## Main API routes
+
+| Route | Purpose |
+| --- | --- |
+| `POST /api/auth/otp/request/` | Request a resident OTP by email |
+| `POST /api/auth/otp/verify/` | Exchange an OTP for JWT tokens |
+| `GET/POST /api/complaints/` | List or file complaints |
+| `GET/PATCH /api/complaints/<id>/` | Read or update a complaint |
+| `POST /api/complaints/<id>/reopen/` | Re-open a closed complaint |
+| `POST /api/complaints/bulk/` | Admin bulk status update |
+| `GET /api/analytics/` | Role-scoped complaint analytics |
+| `GET /api/analytics/range/?from=&to=` | Date-filtered analytics |
+| `GET/POST /api/announcements/` | View or publish announcements |
+| `GET/POST /api/scheduled-works/` | View or publish maintenance work |
+| `GET /api/faq/?q=` | Search the resident handbook |
 | `GET /api/audit-logs/` | Admin audit trail |
-| `POST /api/complaints/bulk/` | Bulk status update |
-| `GET /api/complaints/overdue/` | Overdue list |
-| `GET /api/analytics/range/` | Date-filtered analytics |
-| `POST /api/chatbot/` | Shepherd (+ FAQ answers) |
+| `POST /api/triage/` | Rule-based category and priority suggestion |
+| `POST /api/chatbot/` | Resident helper and FAQ search |
 
-## Stack
-Django 6 · DRF · JWT · PostgreSQL · React · Vite · TypeScript · Tailwind · Framer Motion · Recharts · PWA
+Room numbers are assigned by administrators on resident user records and cannot be changed through the resident profile or complaint form. Complaint priority is assigned automatically from the title and description; staff may override it after operational review.
+
+## Daily administrator digest
+
+Run manually with:
+
+```bash
+python manage.py send_admin_digest
+```
+
+Example cron entry:
+
+```text
+0 8 * * * cd /path/to/Sherpherdsville-main && .venv/bin/python manage.py send_admin_digest
+```
+
+## Production notes
+
+1. Set `DEBUG=False`, a strong `SECRET_KEY`, production hosts/origins, `DATABASE_URL`, and real email settings.
+2. Run `python manage.py migrate` and `python manage.py collectstatic --noinput` during deployment.
+3. Build the frontend with `npm ci && npm run build` and serve `frontend/dist` from the web root.
+4. Start Django with the included `Procfile` command or an equivalent process manager.

@@ -1,8 +1,9 @@
- Admin login  →  username: admin / password: ChangeMe123!
-  Residents    →  NO password — sign in via OTP using any of these:
-    Jane Wanjiku   +254712000001    jane@student.sherpherdsville.com
-    John Otieno    +254712000002    john@student.sherpherdsville.com
-    Mary Kamau     +254712000003    mary@student.sherpherdsville.com
-    Peter Mwangi   +254712000004    peter@student.sherpherdsville.com
-    Grace Achieng  +254712000005    grace@student.sherpherdsville.com
-  With OTP_DEBUG_RETURN_CODE=True (dev only), the OTP request response includes the code directly so you don't need a real SMS provider.
+  Admin login  →  username: admin / password: ChangeMe123!
+  Residents    →  no password — request an OTP using an email below:
+    Jane Wanjiku   jane@student.sherpherdsville.com
+    John Otieno    john@student.sherpherdsville.com
+    Mary Kamau     mary@student.sherpherdsville.com
+    Peter Mwangi   peter@student.sherpherdsville.com
+    Grace Achieng  grace@student.sherpherdsville.com
+  OTP delivery uses the resident's registered email. With
+  OTP_DEBUG_RETURN_CODE=True (development only), the response also includes the code.
