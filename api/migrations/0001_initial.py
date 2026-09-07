@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('groups', models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups')),
                 ('user_permissions', models.ManyToManyField(blank=True, help_text='Specific permissions for this user.', related_name='user_set', related_query_name='user', to='auth.permission', verbose_name='user permissions')),
-                ('category_specialization', models.ForeignKey(blank=True, help_text='For staff/admin roles only — the category they resolve complaints for.', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='specialists', to='api.category')),
+                ('category_specialization', models.ForeignKey(blank=True, help_text='For staff and admin roles only. This is the category they resolve complaints for.', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='specialists', to='api.category')),
             ],
             options={
                 'ordering': ['last_name', 'first_name'],
