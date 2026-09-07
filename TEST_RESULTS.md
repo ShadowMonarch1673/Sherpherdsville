@@ -19,8 +19,11 @@ Tested on 3 September 2026 with Python 3.12.13, Django 6.0.7, and Django REST Fr
 - Screenshot audit: reviewed 24 supplied admin and resident screenshots
 - Resident navigation audit: limited to Dashboard, Complaints, Announcements, Profile, and New Complaint
 - Route authorization audit: Maintenance Calendar is protected for staff in both React routing and the API
-- Public copy audit: removed legacy login explanation, unused Handbook and chatbot interfaces, and user-facing em dashes
+- Public copy audit: removed the legacy login explanation, the unused Handbook interface, and user-facing em dashes
 - Light-theme contrast guard: remaining legacy translucent-white text utilities are converted to readable gray within the portal shell
+- Portal assistant: restored the chatbot with a responsive light-theme interface and retained the existing chatbot API
+- Guided tutorial: added automatic first-login onboarding with highlighted targets, Previous, Next, Skip, and Finish controls, plus a replay button
+- Role-aware tutorial: resident and staff tours describe only the controls available to each role, with a compact mobile sequence
 
 ## Environment note
 
