@@ -1,8 +1,12 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, '.', '')
+  const railwayPublicDomain = env.RAILWAY_PUBLIC_DOMAIN?.trim()
+
+  return {
   plugins: [
     react(),
     VitePWA({
@@ -27,16 +31,6 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/images\.unsplash\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'unsplash-images',
-              expiration: { maxEntries: 32, maxAgeSeconds: 60 * 60 * 24 * 30 },
-            },
-          },
-        ],
       },
     }),
   ],
@@ -49,4 +43,9 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    host: '0.0.0.0',
+    allowedHosts: railwayPublicDomain ? [railwayPublicDomain] : [],
+  },
+  }
 })
