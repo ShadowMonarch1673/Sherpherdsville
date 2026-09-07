@@ -10,6 +10,11 @@ from .models import (
     Notification,
     Comment,
     Review,
+    ResidentRegistry,
+    Announcement,
+    ScheduledWork,
+    FAQArticle,
+    AuditLog,
 )
 
 
@@ -28,6 +33,9 @@ class UserAdmin(DjangoUserAdmin):
                     "profile_picture",
                     "category_specialization",
                     "is_active_resident",
+                    "notify_in_app",
+                    "notify_email_status",
+                    "notify_email_announcements",
                 )
             },
         ),
@@ -81,3 +89,54 @@ class CommentAdmin(admin.ModelAdmin):
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ("complaint", "resident", "rating", "created_at")
     list_filter = ("rating",)
+
+
+@admin.register(ResidentRegistry)
+class ResidentRegistryAdmin(admin.ModelAdmin):
+    list_display = ("email", "telephone", "first_name", "last_name", "room_number", "is_active")
+    search_fields = ("email", "telephone", "first_name", "last_name", "room_number")
+    list_filter = ("is_active",)
+
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display = ("title", "created_by", "is_pinned", "is_active", "created_at")
+    list_filter = ("is_pinned", "is_active")
+
+
+@admin.register(ScheduledWork)
+class ScheduledWorkAdmin(admin.ModelAdmin):
+    list_display = ("title", "start_at", "end_at", "affected_blocks", "is_cancelled")
+    list_filter = ("is_cancelled", "category")
+
+
+@admin.register(FAQArticle)
+class FAQArticleAdmin(admin.ModelAdmin):
+    list_display = ("question", "category", "is_published", "order")
+    list_filter = ("is_published", "category")
+    search_fields = ("question", "answer")
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "actor", "action", "object_type", "object_id")
+    list_filter = ("action", "object_type")
+    search_fields = ("detail", "actor__username")
+    readonly_fields = (
+        "actor",
+        "action",
+        "object_type",
+        "object_id",
+        "detail",
+        "ip_address",
+        "created_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
