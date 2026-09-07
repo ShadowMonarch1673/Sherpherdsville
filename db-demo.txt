@@ -1,5 +1,5 @@
   Admin login  →  username: admin / password: ChangeMe123!
-  Residents    →  no password — request an OTP using an email below:
+  Residents: no password. Request an OTP using an email below:
     Jane Wanjiku   jane@student.sherpherdsville.com
     John Otieno    john@student.sherpherdsville.com
     Mary Kamau     mary@student.sherpherdsville.com

@@ -106,3 +106,17 @@ Example cron entry:
 2. Run `python manage.py migrate` and `python manage.py collectstatic --noinput` during deployment.
 3. Build the frontend with `npm ci && npm run build` and serve `frontend/dist` from the web root.
 4. Start Django with the included `Procfile` command or an equivalent process manager.
+
+### Railway
+
+Railway supplies `RAILWAY_PUBLIC_DOMAIN` automatically. The backend adds that
+hostname to Django's `ALLOWED_HOSTS`, and Vite preview adds it to
+`preview.allowedHosts`; no wildcard host setting is needed.
+
+- Backend variables should include `DEBUG=False`, `SECRET_KEY`, `DATABASE_URL`,
+  `CORS_ALLOWED_ORIGINS=https://<frontend-domain>`, and
+  `CSRF_TRUSTED_ORIGINS=https://<backend-domain>,https://<frontend-domain>`.
+- Frontend variables should include `VITE_API_URL=https://<backend-domain>/api`.
+- Use `npm run preview -- --host 0.0.0.0 --port $PORT` as the frontend start command.
+- A backend root-path 404 is normal because the application is API-only; use
+  `/admin/` to verify the Django service.
