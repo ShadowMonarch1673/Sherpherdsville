@@ -62,6 +62,8 @@ Local development starts without PostgreSQL or email credentials. See `.env.exam
 - `EXTERNAL_DATABASE_URL`: optional read-only resident registry database. Email is the only OTP identifier. When omitted, existing resident users and the local `ResidentRegistry` table are checked.
 - `BREVO_API_KEY`: optional Brevo email API key. When omitted, Django's configured email backend is used.
 - `VITE_API_URL`: optional frontend API base URL; defaults to `/api`.
+- `MEDIA_ROOT`: directory used for uploaded profile, complaint, and resolution images.
+- `MEDIA_FILE_URL_TTL`: lifetime in seconds for signed image links returned by the API.
 
 Never enable `DEBUG` or `OTP_DEBUG_RETURN_CODE` in production.
 
@@ -118,5 +120,9 @@ hostname to Django's `ALLOWED_HOSTS`, and Vite preview adds it to
   `CSRF_TRUSTED_ORIGINS=https://<backend-domain>,https://<frontend-domain>`.
 - Frontend variables should include `VITE_API_URL=https://<backend-domain>/api`.
 - Use `npm run preview -- --host 0.0.0.0 --port $PORT` as the frontend start command.
+- Attach a Railway volume to the backend service with mount path `/app/media`,
+  and set the backend variable `MEDIA_ROOT=/app/media`. Uploaded images will
+  then survive deployments. The API returns expiring signed image links so the
+  volume is not exposed as an unrestricted public directory.
 - A backend root-path 404 is normal because the application is API-only; use
   `/admin/` to verify the Django service.

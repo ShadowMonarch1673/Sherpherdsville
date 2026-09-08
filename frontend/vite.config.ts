@@ -31,6 +31,10 @@ export default defineConfig(({ mode }) => {
       },
       workbox: {
         navigateFallback: '/index.html',
+        // Avoid Workbox's separate Terser worker, which can exit early on
+        // constrained deployment builders. The generated worker is still
+        // production-ready; it is simply left unminified.
+        mode: 'development',
       },
     }),
   ],

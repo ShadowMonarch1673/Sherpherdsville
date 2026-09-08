@@ -1,5 +1,9 @@
+import base64
+import tempfile
 from datetime import timedelta
+from urllib.parse import urlsplit
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.utils import timezone
 from rest_framework import status
@@ -20,6 +24,11 @@ from .models import (
 )
 
 
+ONE_PIXEL_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+)
+
+
 @override_settings(
     EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
     BREVO_API_KEY="",
@@ -27,6 +36,12 @@ from .models import (
 )
 class PortalAPITests(APITestCase):
     def setUp(self):
+        self.media_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.media_directory.cleanup)
+        self.media_settings = override_settings(MEDIA_ROOT=self.media_directory.name)
+        self.media_settings.enable()
+        self.addCleanup(self.media_settings.disable)
+
         self.electrical = Category.objects.get(name="Electrical")
         self.plumbing = Category.objects.get(name="Plumbing")
         self.other = Category.objects.get(name="Other")
@@ -173,6 +188,36 @@ class PortalAPITests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("room_number", response.data)
+
+    @override_settings(DEBUG=False)
+    def test_uploaded_images_use_valid_signed_urls(self):
+        complaint = self.make_complaint()
+        self.client.force_authenticate(self.resident)
+        uploaded = self.client.post(
+            f"/api/complaints/{complaint.pk}/attachments/",
+            {
+                "image": SimpleUploadedFile(
+                    "evidence.png", ONE_PIXEL_PNG, content_type="image/png"
+                )
+            },
+            format="multipart",
+        )
+        self.assertEqual(uploaded.status_code, status.HTTP_201_CREATED)
+
+        media_url = urlsplit(uploaded.data["image"])
+        self.assertEqual(media_url.path.split("/", 2)[:2], ["", "media"])
+        self.assertIn("token=", media_url.query)
+
+        self.client.force_authenticate(user=None)
+        served = self.client.get(f"{media_url.path}?{media_url.query}")
+        self.assertEqual(served.status_code, status.HTTP_200_OK)
+        self.assertEqual(served["Content-Type"], "image/png")
+        self.assertEqual(b"".join(served.streaming_content), ONE_PIXEL_PNG)
+
+        unsigned = self.client.get(media_url.path)
+        self.assertEqual(unsigned.status_code, status.HTTP_403_FORBIDDEN)
+        tampered = self.client.get(f"{media_url.path}?{media_url.query}x")
+        self.assertEqual(tampered.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_specialist_is_limited_to_their_category(self):
         specialist = User.objects.create_user(

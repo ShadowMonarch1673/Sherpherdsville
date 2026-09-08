@@ -194,10 +194,17 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STORAGES = {
+    "default": {
+        "BACKEND": "api.storage.SignedMediaStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     }
 }
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path(env("MEDIA_ROOT", default=str(BASE_DIR / "media")))
+# Uploaded-file URLs are signed before they are returned by the API. This lets
+# the frontend display images without making every file in MEDIA_ROOT public.
+MEDIA_FILE_URL_TTL = env.int("MEDIA_FILE_URL_TTL", default=3600)
+MEDIA_SIGNING_SALT = "sherpherdsville.media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
