@@ -64,11 +64,11 @@ export default function NotificationDropdown() {
           setOpen(!open)
           if (!open) load()
         }}
-        className="relative p-2.5 rounded-xl glass hover:bg-white/10 transition-colors"
+        className="relative p-2.5 rounded-xl bg-[#F7F2E7] border border-[#E7D8B8] hover:bg-[#F2E8D2] transition-colors"
       >
-        <Bell size={18} className="text-white/70" />
+        <Bell size={18} className="text-[#A57B2F]" />
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-blue-500 rounded-full text-[10px] font-semibold flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-[#2E67B1] text-white rounded-full text-[10px] font-semibold flex items-center justify-center">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -88,7 +88,7 @@ export default function NotificationDropdown() {
               {unread > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                  className="text-xs text-[#2E67B1] hover:text-[#244F83] flex items-center gap-1"
                 >
                   <Check size={12} /> Mark all read
                 </button>
@@ -125,9 +125,9 @@ export default function NotificationDropdown() {
                           <Link
                             to={`/portal/complaints/${n.complaint_id}`}
                             onClick={() => setOpen(false)}
-                            className="text-xs text-blue-400 hover:text-blue-300 mt-1 inline-block"
+                            className="text-xs text-[#2E67B1] hover:text-[#244F83] mt-1 inline-block"
                           >
-                            View complaint →
+                            View complaint
                           </Link>
                         )}
                       </div>

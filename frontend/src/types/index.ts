@@ -14,7 +14,7 @@ export interface User {
   last_name: string
   email: string
   telephone: string
-  room_number: string
+  room_number: string | null
   role: Role
   profile_picture: string | null
   is_admin?: boolean

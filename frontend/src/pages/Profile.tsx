@@ -11,7 +11,6 @@ export default function Profile() {
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
     telephone: user?.telephone || '',
-    room_number: user?.room_number || '',
     notify_in_app: user?.notify_in_app ?? true,
     notify_email_status: user?.notify_email_status ?? true,
     notify_email_announcements: user?.notify_email_announcements ?? true,
@@ -36,7 +35,6 @@ export default function Profile() {
         first_name: form.first_name,
         last_name: form.last_name,
         telephone: form.telephone,
-        room_number: form.room_number,
         notify_in_app: form.notify_in_app,
         notify_email_status: form.notify_email_status,
         notify_email_announcements: form.notify_email_announcements,
@@ -165,7 +163,7 @@ export default function Profile() {
             <input value={user?.email || ''} disabled className="w-full glass-input opacity-50" />
           </div>
           <div>
-            <label className="block text-sm text-white/60 mb-1.5">Phone</label>
+            <label className="block text-sm text-white/60 mb-1.5">Phone (contact only)</label>
             <input
               value={form.telephone}
               onChange={(e) => setForm({ ...form, telephone: e.target.value })}
@@ -175,10 +173,11 @@ export default function Profile() {
           <div>
             <label className="block text-sm text-white/60 mb-1.5">Room number</label>
             <input
-              value={form.room_number}
-              onChange={(e) => setForm({ ...form, room_number: e.target.value })}
-              className="w-full glass-input"
+              value={user?.room_number || 'Not assigned'}
+              disabled
+              className="w-full glass-input opacity-50"
             />
+            <p className="text-xs text-white/35 mt-1">Assigned by hostel administration.</p>
           </div>
 
           {/* Notification prefs */}
@@ -220,7 +219,7 @@ export default function Profile() {
           </p>
           {!user?.has_usable_password && (
             <p className="text-xs text-amber-200/80 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-              OTP-only account — set a password below to also sign in with username.
+              OTP-only account. Set a password below to also sign in with your username.
             </p>
           )}
           {user?.has_usable_password && (

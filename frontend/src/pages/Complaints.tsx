@@ -191,7 +191,7 @@ export default function Complaints() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h3 className="font-semibold group-hover:text-white transition-colors truncate">
+                    <h3 className="font-semibold group-hover:text-[#2E67B1] transition-colors truncate">
                       {c.title}
                     </h3>
                     <span className={cn('text-xs px-2 py-0.5 rounded-md', priorityColors[c.priority])}>

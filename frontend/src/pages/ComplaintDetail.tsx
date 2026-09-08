@@ -24,6 +24,7 @@ export default function ComplaintDetail() {
   const [reopenNote, setReopenNote] = useState('')
   const [reopening, setReopening] = useState(false)
   const [resolutionFile, setResolutionFile] = useState<File | null>(null)
+  const [loadError, setLoadError] = useState('')
 
   const load = async () => {
     const [c, cm] = await Promise.all([
@@ -38,7 +39,10 @@ export default function ComplaintDetail() {
   }
 
   useEffect(() => {
-    load().finally(() => setLoading(false))
+    setLoadError('')
+    load()
+      .catch(() => setLoadError('Could not load this complaint. It may not exist or you may not have access.'))
+      .finally(() => setLoading(false))
   }, [id])
 
   const reopenComplaint = async () => {
@@ -95,10 +99,21 @@ export default function ComplaintDetail() {
     await load()
   }
 
-  if (loading || !complaint) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (loadError || !complaint) {
+    return (
+      <div className="glass-card p-8 max-w-xl mx-auto text-center">
+        <p className="text-rose-300">{loadError || 'Complaint not found.'}</p>
+        <button onClick={() => navigate('/portal/complaints')} className="btn-ghost mt-4">
+          Back to complaints
+        </button>
       </div>
     )
   }
@@ -108,7 +123,7 @@ export default function ComplaintDetail() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl mx-auto space-y-6">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[#656B74] hover:text-[#2E67B1] transition-colors text-sm">
         <ArrowLeft size={16} /> Back
       </button>
 
@@ -187,7 +202,7 @@ export default function ComplaintDetail() {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-white/60 mb-1.5">Priority</label>
+              <label className="block text-sm text-white/60 mb-1.5">Priority (automatic; staff override)</label>
               <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full glass-input">
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -282,10 +297,11 @@ export default function ComplaintDetail() {
             onChange={(e) => setReopenNote(e.target.value)}
             placeholder="What is still wrong?"
             className="w-full glass-input min-h-[70px]"
+            required
           />
           <button
             onClick={reopenComplaint}
-            disabled={reopening || (complaint.reopen_count || 0) >= 3}
+            disabled={reopening || !reopenNote.trim() || (complaint.reopen_count || 0) >= 3}
             className="btn-primary"
           >
             {reopening ? 'Re-opening…' : 'Re-open this complaint'}

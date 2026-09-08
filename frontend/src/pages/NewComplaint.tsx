@@ -6,11 +6,11 @@ import api from '../lib/api'
 import type { Category } from '../types'
 
 const QUICK_TEMPLATES = [
-  { label: 'No water', title: 'No water supply', description: 'There is no running water in my room/block.', priority: 'URGENT', categoryHint: 'Plumbing' },
-  { label: 'Power out', title: 'Power outage in room', description: 'Electrical power is out in my room.', priority: 'URGENT', categoryHint: 'Electrical' },
-  { label: 'Lockout', title: 'Access card / lockout', description: 'Unable to access my room or building with my card.', priority: 'HIGH', categoryHint: 'Security' },
-  { label: 'Leak', title: 'Water leak', description: 'There is a water leak that needs attention.', priority: 'HIGH', categoryHint: 'Plumbing' },
-  { label: 'Wi-Fi', title: 'Wi-Fi not working', description: 'Internet connection is down or very slow in my room.', priority: 'MEDIUM', categoryHint: 'Internet' },
+  { label: 'No water', title: 'No water supply', description: 'There is no running water in my room/block.', categoryHint: 'Plumbing' },
+  { label: 'Power out', title: 'Power outage in room', description: 'Electrical power is out in my room.', categoryHint: 'Electrical' },
+  { label: 'Lockout', title: 'Access card / lockout', description: 'Unable to access my room or building with my card.', categoryHint: 'Security' },
+  { label: 'Leak', title: 'Water leak', description: 'There is a water leak that needs attention.', categoryHint: 'Plumbing' },
+  { label: 'Wi-Fi', title: 'Wi-Fi not working', description: 'Internet connection is down or very slow in my room.', categoryHint: 'Internet' },
 ]
 
 
@@ -22,8 +22,6 @@ export default function NewComplaint() {
     title: '',
     description: '',
     category: '',
-    priority: 'MEDIUM',
-    room_number: '',
   })
   const [files, setFiles] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
@@ -40,11 +38,6 @@ export default function NewComplaint() {
 
   useEffect(() => {
     api.get('/categories/').then((res) => setCategories(res.data.results || res.data))
-    api.get('/me/').then((res) => {
-      if (res.data.room_number) {
-        setForm((f) => ({ ...f, room_number: res.data.room_number }))
-      }
-    })
   }, [])
 
   const onFiles = (selected: FileList | null) => {
@@ -73,7 +66,6 @@ export default function NewComplaint() {
       ...f,
       title: t.title,
       description: t.description,
-      priority: t.priority,
       category: cat ? String(cat.id) : f.category,
     }))
   }
@@ -99,7 +91,6 @@ export default function NewComplaint() {
     setForm((f) => ({
       ...f,
       category: triage.suggested_category_id ? String(triage.suggested_category_id) : f.category,
-      priority: triage.suggested_priority || f.priority,
     }))
   }
 
@@ -179,29 +170,9 @@ export default function NewComplaint() {
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-white/60 mb-1.5">Priority</label>
-            <select
-              value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value })}
-              className="w-full glass-input"
-            >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-              <option value="URGENT">Urgent</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm text-white/60 mb-1.5">Room number</label>
-            <input
-              value={form.room_number}
-              onChange={(e) => setForm({ ...form, room_number: e.target.value })}
-              className="w-full glass-input"
-              required
-            />
-          </div>
+        <div className="text-xs p-3 rounded-xl bg-white/5 border border-white/10 text-white/50">
+          Your room is taken from your resident account. Priority is assigned automatically
+          from the issue description and safety keywords.
         </div>
 
         <div>
@@ -217,19 +188,19 @@ export default function NewComplaint() {
 
         <div className="flex flex-wrap gap-2 items-center">
           <button type="button" onClick={runTriage} disabled={triaging || !form.title} className="btn-ghost text-sm">
-            <Sparkles size={14} /> {triaging ? 'Analyzing...' : 'Suggest category & priority'}
+            <Sparkles size={14} /> {triaging ? 'Analyzing...' : 'Analyze complaint'}
           </button>
           {triage && (
             <div className="flex-1 min-w-[200px] text-xs p-3 rounded-xl bg-white/5 border border-white/10">
               <p className="text-white/80">
-                <strong>{triage.suggested_category_name || '—'}</strong>
+                <strong>{triage.suggested_category_name || 'Not available'}</strong>
                 {' · '}
                 {triage.suggested_priority}
                 <span className="text-white/40"> ({triage.confidence})</span>
               </p>
               <p className="text-white/40 mt-1">{triage.reason}</p>
-              <button type="button" onClick={applyTriage} className="mt-2 text-white underline text-xs">
-                Apply suggestion
+              <button type="button" onClick={applyTriage} className="mt-2 text-[#2E67B1] underline text-xs">
+                Use suggested category
               </button>
             </div>
           )}

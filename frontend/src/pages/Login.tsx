@@ -10,7 +10,7 @@ export default function Login() {
   const [mode, setMode] = useState<Mode>('otp')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [identifier, setIdentifier] = useState('')
+  const [email, setEmail] = useState('')
   const [otpSent, setOtpSent] = useState(false)
   const [code, setCode] = useState('')
   const [debugOtp, setDebugOtp] = useState('')
@@ -41,15 +41,14 @@ export default function Login() {
     setDebugOtp('')
     setLoading(true)
     try {
-      const { data } = await api.post('/auth/otp/request/', { identifier })
+      const { data } = await api.post('/auth/otp/request/', { email })
       setOtpSent(true)
       setInfo(
         data.resident_name
-          ? `Hi ${data.resident_name} — enter the code sent to your phone.`
-          : 'Enter the code sent to your phone.'
+          ? `Hi ${data.resident_name}. Enter the code sent to your registered email.`
+          : 'Enter the code sent to your registered email.'
       )
       if (data.debug_otp) setDebugOtp(data.debug_otp)
-      if (data.telephone) setIdentifier(data.telephone)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Could not send OTP')
     } finally {
@@ -62,7 +61,7 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const { data } = await api.post('/auth/otp/verify/', { telephone: identifier, code })
+      const { data } = await api.post('/auth/otp/verify/', { email, code })
       localStorage.setItem('access_token', data.access)
       localStorage.setItem('refresh_token', data.refresh)
       await refreshUser()
@@ -77,8 +76,8 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#2E67B1]/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#C9932F]/5 rounded-full blur-3xl" />
       </div>
 
       <motion.div
@@ -88,11 +87,11 @@ export default function Login() {
         className="w-full max-w-md relative z-10"
       >
         <div className="text-center mb-8">
-          <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-slate-300 items-center justify-center text-2xl font-bold shadow-xl text-[#08090b] mb-4">
+          <div className="inline-flex w-14 h-14 rounded-2xl bg-[#2E67B1] items-center justify-center text-2xl font-bold shadow-xl shadow-blue-900/10 text-white mb-4">
             S
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Sherpherdsville</h1>
-          <p className="text-white/50 mt-1">Hostel Management Portal</p>
+          <p className="text-[#777D86] mt-1">Complaints Management Portal</p>
         </div>
 
         <div className="glass-card p-8">
@@ -102,16 +101,16 @@ export default function Login() {
               type="button"
               onClick={() => { setMode('otp'); setError(''); setInfo('') }}
               className={`flex-1 py-2 text-sm rounded-full transition-all ${
-                mode === 'otp' ? 'bg-white text-[#08090b] font-medium' : 'text-white/60'
+                mode === 'otp' ? 'bg-[#2E67B1] text-white font-medium' : 'text-[#6B717A]'
               }`}
             >
-              Phone OTP
+              Email OTP
             </button>
             <button
               type="button"
               onClick={() => { setMode('password'); setError(''); setInfo('') }}
               className={`flex-1 py-2 text-sm rounded-full transition-all ${
-                mode === 'password' ? 'bg-white text-[#08090b] font-medium' : 'text-white/60'
+                mode === 'password' ? 'bg-[#2E67B1] text-white font-medium' : 'text-[#6B717A]'
               }`}
             >
               Password
@@ -156,21 +155,17 @@ export default function Login() {
           ) : (
             <>
               <h2 className="text-lg font-semibold mb-2">Resident login</h2>
-              <p className="text-sm text-white/45 mb-6">
-                Only a phone number or email already in the hostel resident registry can
-                receive a code — there's no separate account to create. Session lasts 3 days.
-              </p>
 
               {!otpSent ? (
                 <form onSubmit={requestOtp} className="space-y-4">
                   <div>
-                    <label className="block text-sm text-white/60 mb-1.5">Phone number or email</label>
+                    <label className="block text-sm text-white/60 mb-1.5">Email</label>
                     <input
-                      type="text"
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="w-full glass-input"
-                      placeholder="+254712000001 or jane@student.sherpherdsville.com"
+                      placeholder="jane@student.sherpherdsville.com"
                       required
                       autoFocus
                     />
@@ -221,28 +216,14 @@ export default function Login() {
                   </button>
                   <button
                     type="button"
-                    className="w-full text-sm text-white/45 hover:text-white mt-1"
+                    className="w-full text-sm text-[#6B717A] hover:text-[#2E67B1] mt-1"
                     onClick={() => { setOtpSent(false); setCode(''); setError(''); setDebugOtp('') }}
                   >
-                    Use a different number
+                    Use a different email
                   </button>
                 </form>
               )}
             </>
-          )}
-
-          {mode === 'password' && (
-            <p className="text-center text-sm text-white/40 mt-6">
-              Residents don't sign in with a password — switch to{' '}
-              <button
-                type="button"
-                onClick={() => { setMode('otp'); setError(''); setInfo('') }}
-                className="text-white hover:text-slate-200 transition-colors font-medium"
-              >
-                Phone OTP
-              </button>{' '}
-              instead.
-            </p>
           )}
         </div>
       </motion.div>

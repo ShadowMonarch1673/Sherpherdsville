@@ -50,7 +50,7 @@ export default function AuditLogPage() {
                 <span className="text-white/70 flex-1">
                   {log.actor_name} · {log.object_type}
                   {log.object_id != null && ` #${log.object_id}`}
-                  {log.detail && ` — ${log.detail}`}
+                  {log.detail && `. ${log.detail}`}
                 </span>
               </motion.div>
             ))}

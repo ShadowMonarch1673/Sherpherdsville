@@ -106,7 +106,7 @@ export default function CalendarPage() {
                   <h3 className="font-semibold">{w.title}</h3>
                   {w.description && <p className="text-sm text-white/50 mt-1">{w.description}</p>}
                   <div className="flex flex-wrap gap-3 mt-3 text-xs text-white/40">
-                    <span>{formatDateTime(w.start_at)} → {formatDateTime(w.end_at)}</span>
+                    <span>{formatDateTime(w.start_at)} to {formatDateTime(w.end_at)}</span>
                     {w.affected_blocks && (
                       <span className="inline-flex items-center gap-1">
                         <MapPin size={12} /> {w.affected_blocks}
@@ -122,7 +122,7 @@ export default function CalendarPage() {
             <EmptyState
               icon={CalIcon}
               title="No scheduled works"
-              description="When maintenance is planned, it will appear here for all residents."
+              description="Scheduled maintenance will appear here for authorized staff."
             />
           )}
         </div>

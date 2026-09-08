@@ -23,10 +23,10 @@ export function formatDateTime(date: string | Date) {
 }
 
 export const statusColors: Record<string, string> = {
-  PENDING: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  IN_PROGRESS: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  RESOLVED: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-  REJECTED: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+  PENDING: 'bg-[#FAF1DF] text-[#94651F] border-[#E7CE9E]',
+  IN_PROGRESS: 'bg-[#F8E9E6] text-[#9F564F] border-[#E8C1BB]',
+  RESOLVED: 'bg-[#EAF3EC] text-[#39734A] border-[#C5DCCB]',
+  REJECTED: 'bg-[#F8E9E6] text-[#9F4B45] border-[#E8C1BB]',
 }
 
 export const priorityColors: Record<string, string> = {

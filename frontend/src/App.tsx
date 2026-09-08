@@ -11,7 +11,6 @@ import Profile from './pages/Profile'
 import Layout from './components/Layout'
 import LandingPage from './pages/LandingPage'
 import CalendarPage from './pages/Calendar'
-import FAQPage from './pages/FAQ'
 import AuditLogPage from './pages/AuditLog'
 
 function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
@@ -47,12 +46,43 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        <div className="w-10 h-10 border-2 border-[#2E67B1] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
   if (!user) return <Navigate to="/login" replace />
   if (!(user.is_admin || user.role === 'ADMIN')) return <Navigate to="/portal" replace />
+  return <>{children}</>
+}
+
+function StaffRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[#2E67B1] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+  const staffRoles = ['ADMIN', 'ELECTRICIAN', 'PLUMBER', 'CARPENTER', 'CLEANER', 'SECURITY']
+  if (!user) return <Navigate to="/login" replace />
+  if (!(user.is_admin || user.is_specialist || staffRoles.includes(user.role))) {
+    return <Navigate to="/portal" replace />
+  }
+  return <>{children}</>
+}
+
+function ResidentRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[#2E67B1] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'RESIDENT') return <Navigate to="/portal" replace />
   return <>{children}</>
 }
 
@@ -62,7 +92,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-        {/* Resident self-registration route removed by design — OTP-only access. */}
+        {/* Resident self-registration is intentionally unavailable. */}
         <Route
           path="/portal"
           element={
@@ -73,11 +103,10 @@ function AppRoutes() {
         >
           <Route index element={<Dashboard />} />
           <Route path="complaints" element={<Complaints />} />
-          <Route path="complaints/new" element={<NewComplaint />} />
+          <Route path="complaints/new" element={<ResidentRoute><NewComplaint /></ResidentRoute>} />
           <Route path="complaints/:id" element={<ComplaintDetail />} />
           <Route path="announcements" element={<Announcements />} />
-          <Route path="calendar" element={<CalendarPage />} />
-          <Route path="faq" element={<FAQPage />} />
+          <Route path="calendar" element={<StaffRoute><CalendarPage /></StaffRoute>} />
           <Route path="audit" element={<AdminRoute><AuditLogPage /></AdminRoute>} />
           <Route path="profile" element={<Profile />} />
         </Route>

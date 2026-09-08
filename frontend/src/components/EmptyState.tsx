@@ -19,7 +19,7 @@ export default function EmptyState({ icon: Icon, title, description, action }: P
       <div className="mx-auto w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-5">
         <Icon size={28} className="text-white/50" />
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+      <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">{title}</h3>
       <p className="text-sm text-white/45 max-w-sm mx-auto leading-relaxed">{description}</p>
       {action && <div className="mt-6">{action}</div>}
     </motion.div>
